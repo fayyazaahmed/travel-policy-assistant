@@ -1,71 +1,184 @@
 # Travel Policy Assistant
 
-A small AI-assisted travel expense policy retrieval system.
+A lightweight AI-assisted travel expense policy retrieval system built around a structured travel expense policy dataset.
 
-The application answers questions about travel expense policies using the
-provided travel expense policy dataset. When the available policy information
-does not cover a question, the system should clearly indicate that instead of
-inventing an answer.
+The application answers questions about travel expense policies and returns the relevant allowance or policy condition. When the available policy information does not cover a question, the system explicitly states that rather than inventing an answer.
+
+### Live Application
+
+https://travel-policy-assistant.onrender.com
 
 ## Project Status
 
-Currently under development.
+The current implementation is complete and deployed as a Dockerized FastAPI web application.
+
+The application includes:
+
+* CSV-based policy data ingestion
+* SQLite database storage
+* Duplicate policy handling
+* Repository-based data access
+* Structured category and region matching
+* TF-IDF retrieval with cosine similarity
+* Ambiguous-policy detection
+* Unsupported-question handling
+* FastAPI API
+* Browser-based frontend
+* Automated tests
+* Docker deployment
+* Public Render deployment
 
 ## Requirements
 
-- Python 3.11.8
-- pip
-- Git
+* Python 3.11+
+* pip
+* Git
+* requirements.txt
+
+Docker is only required if you want to build and run the container locally. The deployed application runs using Docker on Render.
 
 ## Setup
 
-Install the project dependencies:
+Clone the repository:
+
+git clone https://github.com/fayyazaahmed/travel-policy-assistant.git
+cd travel-policy-assistant
+
+
+Create and activate a virtual environment:
+
+### Windows
+
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+
+
+### macOS / Linux
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+
+Install the dependencies:
 
 python -m pip install -r backend/requirements.txt
-Project Structure
+
+
+## Running the Application
+
+From the project root:
+
+uvicorn backend.app.main:app --reload
+
+
+The application can then be accessed at:
+
+http://127.0.0.1:8000
+
+
+The FastAPI (Swagger) interactive documentation is available at:
+
+http://127.0.0.1:8000/docs
+
+
+The application automatically creates and seeds the SQLite database from the source CSV when it starts.
+
+## Project Structure
+
 travel-policy-assistant/
+│
 ├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── routers/
+│   │   │   ├── health.py
+│   │   │   └── policy.py
+│   │   ├── services/
+│   │   │   ├── policy_service.py
+│   │   │   └── retrieval_service.py
+│   │   ├── db/
+│   │   │   ├── database.py
+│   │   │   ├── policy_repository.py
+│   │   │   └── seed.py
+│   │   ├── models/
+│   │   │   └── policy.py
+│   │   └── schemas/
+│   │       └── policy.py
+│   │
+│   ├── tests/
+│   │   ├── test_policy_service.py
+│   │   ├── test_retrieval.py
+│   │   └── test_api.py
+│   │
+│   ├── requirements.txt
+│   └── Dockerfile
+│
 ├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+│
 ├── data/
+│   └── travel_expense_policy.csv
+│
 ├── .gitignore
 └── README.md
-Development
 
-The project is being developed incrementally, with the backend, retrieval
-system, API, tests, and frontend added separately.
 
+`backend/policy.db` is generated at runtime and is intentionally excluded from version control.
 
 ## Architecture
 
-Planned application flow:
+The current application follows this flow:
 
-Travel Policy CSV
-       ↓
-   SQLite
-       ↓
-Policy Repository
-       ↓
-Retrieval System
-       ↓
-Policy Service
-       ↓
-    FastAPI
-       ↓
-   Frontend
-
-
-Backend Layers
-Models — represent application data such as individual travel policies.
-Database — manages the SQLite connection and database initialization.
-Repository — handles database operations such as inserting and retrieving policies.
-Services — contain the application's business and policy logic.
-Routers — expose functionality through the FastAPI API.
-Schemas — define and validate API request and response formats.
+Travel Expense CSV
+        ↓
+   CSV Ingestion
+        ↓
+   Policy Model
+        ↓
+      SQLite
+        ↓
+ Policy Repository
+        ↓
+ Retrieval Service
+        ↓
+   Policy Service
+        ↓
+      FastAPI
+        ↓
+    Frontend
 
 
-### Data Model
+### Backend Layers
 
-The policy model mirrors the structure of the provided CSV dataset.
+**Models**
+
+Represent application data, including individual travel policies.
+
+**Database**
+
+Creates and manages the SQLite database connection and schema.
+
+**Repository**
+
+Handles database operations such as inserting and retrieving policies.
+
+**Services**
+
+Contain retrieval, policy matching, ambiguity handling, and application-level business logic.
+
+**Routers**
+
+Expose application functionality through FastAPI endpoints.
+
+**Schemas**
+
+Define and validate API request and response formats using Pydantic.
+
+## Data Model
+
+The policy model closely follows the structure of the supplied CSV dataset:
 
 Policy
 ├── id: int
@@ -75,161 +188,583 @@ Policy
 ├── currency: str
 └── notes: str
 
-The id field is generated by SQLite and is not part of the original CSV.
 
-The application intentionally keeps the model close to the supplied dataset rather than introducing unnecessary additional fields.
+The `id` field is generated by SQLite and is not part of the original CSV.
 
-### Database
+The model intentionally remains close to the supplied dataset rather than introducing unnecessary fields.
 
-The application uses SQLite as its local database.
+## Database
 
-SQLite was selected because it:
+SQLite is used as the runtime database.
 
-Requires no separate database server.
-Requires no credentials or external services.
-Is included in Python's standard library.
-Provides a clean database abstraction through the repository layer.
-Is suitable for the small policy dataset used by this project.
+It was selected because it:
+
+* Requires no separate database server
+* Requires no credentials
+* Requires no external service
+* Is available through Python's standard library
+* Provides a simple relational data layer
+* Is appropriate for the small policy dataset used by this project
 
 The source data remains in:
 
 data/travel_expense_policy.csv
 
-The application database is generated as:
+
+The runtime database is generated as:
 
 backend/policy.db
 
-The database contains a policies table with the following fields:
 
-Column	Type	Description
-id - INTEGER	Automatically generated primary key
-category -	TEXT	Expense category
-region	TEXT -	Applicable region
-daily_limit_usd -	REAL	Policy limit
-currency -	TEXT	Currency of the limit
-notes -	TEXT	Additional policy conditions
+The database contains a `policies` table with the following fields:
+
+| Column            | Type    | Description                         |
+| ----------------- | ------- | ----------------------------------- |
+| `id`              | INTEGER | Automatically generated primary key |
+| `category`        | TEXT    | Expense category                    |
+| `region`          | TEXT    | Applicable region                   |
+| `daily_limit_usd` | REAL    | Policy allowance                    |
+| `currency`        | TEXT    | Currency of the allowance           |
+| `notes`           | TEXT    | Additional policy conditions        |
 
 The database is generated from the source CSV rather than being treated as the primary source of policy data.
 
+This means a fresh clone of the repository does not require a committed database file.
 
-### Data Ingestion
+## Data Ingestion
 
-The SQLite database is populated from the source CSV dataset during application setup.
+The SQLite database is populated from the source CSV during application startup.
 
 The ingestion flow is:
 
 travel_expense_policy.csv
           ↓
-     CSV Reader
+      CSV Reader
           ↓
-    Policy Model
+     Policy Model
           ↓
-  Policy Repository
+   Policy Repository
           ↓
      SQLite Database
 
 
 The ingestion process also handles duplicate policy records.
 
-For this dataset, a policy is considered a duplicate when its category, region, daily_limit_usd, and currency are identical. The notes field is not used to determine identity because the supplied duplicate record has slightly different notes.
+For this dataset, a policy is considered a duplicate when the following fields are identical:
+
+category
+region
+daily_limit_usd
+currency
 
 
+The `notes` field is intentionally not used for duplicate identification because the supplied dataset contains a duplicate policy with slightly different notes.
+
+The database therefore contains the unique policy records rather than blindly inserting every CSV row.
+
+## Retrieval and Decision Logic
+
+The retrieval system combines **structured matching** with **TF-IDF and cosine similarity**.
+
+### 1. Category and Region Detection
+
+Known expense categories and regions are detected from the user's question using predefined aliases.
+
+For example:
+
+meal → Meals
+food → Meals
+uae → United Arab Emirates, etc.
 
 
+When a category is identified, candidate policies are restricted to that category.
+
+When a region is identified, policies for that region and applicable `Global` policies are considered.
+
+This structured filtering is important because the dataset is small and highly structured.
+
+### 2. TF-IDF Retrieval
+
+The remaining candidate policies are represented using TF-IDF vectors.
+
+The user's question is also converted into a TF-IDF vector.
+
+Cosine similarity is then used to measure how closely the question matches each candidate policy.
+
+The candidates are ranked according to their similarity scores.
+
+### 3. Decision Handling
+
+The policy service handles three main outcomes.
+
+**Clear match**
+
+When one policy is clearly more relevant than the alternatives, its allowance and policy conditions are returned.
+
+Example:
+
+Question:
+What is the hotel allowance in India?
+
+Answer:
+$120 USD per night.
 
 
-### Testing
+**Ambiguous match**
 
-Tests will be added as the application is implemented.
+When multiple policies are similarly relevant, the system does not arbitrarily choose one.
 
+For example, the dataset contains two airfare policies with different conditions:
 
-### Deployment
+* Economy flights under 6 hours
+* Business class permitted for flights over 6 hours
 
-## Development Status
+Therefore, a generic question such as:
 
-The project is being developed incrementally. The current implementation includes:
-
-- Python 3.11.8 development environment
-- SQLite database layer
-- Policy data model
-- CSV-to-SQLite data ingestion
-- Duplicate policy handling
-- Policy repository
-- TF-IDF vectorization with cosine-similarity-based policy retrieval
-- Category and region matching
-- Global policy handling
-- Ambiguous policy detection
-- Unsupported-question handling
-- Policy value extraction
-
-The policy data flows through the following layers:
-
-```text
-CSV Dataset
-     ↓
-CSV Ingestion
-     ↓
-SQLite Database
-     ↓
-Policy Repository
-     ↓
-Retrieval Service
-     ↓
-Policy Service
-     ↓
-User-facing answer
+What is the airfare allowance?
 
 
-### Retrieval and Decision Logic
+does not contain enough information to safely select one policy.
 
-The retrieval system combines structured matching with TF-IDF and cosine similarity.
+The system instead asks the user to provide more specific details.
 
-Known expense categories and regions are detected from the user's question using predefined aliases. When a category or region is identified, the candidate policies are restricted accordingly. Global policies are considered applicable when a specific region is mentioned.
+**Unsupported question**
 
-The remaining candidate policies are represented using TF-IDF vectors, and cosine similarity is used to measure how closely the user's question matches each policy. The policies are then ranked by their similarity scores.
+If the question does not identify a supported travel expense category, the system indicates that the travel expense policy does not cover the question.
 
-The policy service handles three main outcomes:
+Example:
 
-1. **Clear match** — return the value from the most relevant policy.
-2. **Ambiguous match** — avoid selecting a policy when multiple policies are similarly relevant.
-3. **Unsupported question** — indicate that the travel expense policy does not cover the question when no supported expense category is detected.
-
-This approach is intentionally lightweight and deterministic because the dataset is small and structured. It avoids requiring an external LLM, API key, paid service, or model download.
-
-
-### API
-POST /api/policy/query
-
-Answers a question using the available travel expense policies.
-
-Request:
-
-{
-  "question": "What is the hotel allowance in India?"
-}
+What is the company policy for maternity leave?
 
 Response:
 
+The travel expense policy does not cover this question.
+
+
+This prevents the retrieval system from returning an unrelated policy simply because it happens to have the highest similarity score.
+
+## Why a Lightweight Retrieval Approach?
+
+The dataset is small, structured, and contains a limited number of policy categories.
+
+Because of this, using an external LLM or embedding service would add complexity without providing a proportional benefit for the current scope.
+
+The current approach is therefore intentionally:
+
+* Lightweight
+* Deterministic
+* Offline-capable
+* Easy to understand
+* Easy to test
+* Free to run
+* Independent of external API keys
+* Independent of model downloads
+
+No external LLM, paid API, API key, or hosted AI model is required by the current implementation.
+
+## API
+
+### `POST /api/policy/query`
+
+Answers a question using the available travel expense policies.
+
+#### Request
+
 {
-  "answer": "$120 USD per night."
+    "question": "What is the hotel allowance in India?"
 }
 
-The API returns an HTTP 200 response for successfully processed questions.
 
-Interactive API documentation is provided by FastAPI at:
+#### Response
+
+{
+    "answer": "$120 USD per night."
+}
+
+
+The endpoint returns an HTTP 200 response when the request is successfully processed.
+
+FastAPI also provides interactive API documentation through Swagger UI:
 
 http://127.0.0.1:8000/docs
 
-The API currently exposes the query endpoint required by the frontend. Additional endpoints will only be added if they are needed by the application.
+
+The API currently exposes the functionality required by the frontend. Additional endpoints can be introduced if future requirements justify them.
+
+## Frontend
+
+The frontend is intentionally lightweight because the primary focus of this project is the backend retrieval and policy-processing system.
+
+It consists of:
+
+* `index.html` — page structure
+* `style.css` — basic styling
+* `app.js` — user interaction and API communication
+
+The frontend communicates with the FastAPI backend using:
+
+`POST /api/policy/query`
 
 
+The frontend and backend are served by the same FastAPI application, avoiding the need for a separate frontend deployment or CORS configuration.
 
-### Future Improvements
+## Testing
 
-Additional improvements will be documented as the project is completed.
+The project includes tests covering the main application layers:
+
+* Retrieval behavior
+* Policy service decisions
+* API behavior
+
+The tests cover important scenarios including:
+
+* Supported policy questions
+* Category matching
+* Region matching
+* Global policies
+* Duplicate handling
+* Clear retrieval results
+* Ambiguous policy questions
+* Unsupported questions
+* API responses
+
+Run the test suite with:
+
+pytest
 
 
-### AI Tools Used
+## Deployment
 
-AI tools were used as development assistance. All generated code and design
-decisions are reviewed and understood before being included in the project.
+The application is containerized using Docker.
+
+The Docker image contains:
+
+* Python runtime
+* Backend dependencies
+* FastAPI application
+* Frontend
+* Source policy dataset
+
+The application is configured to listen on the port supplied by the hosting environment while defaulting to port `8000` for local execution.
+
+The application is currently deployed on Render as a free Docker-based web service.
+
+### Live Application
+
+https://travel-policy-assistant.onrender.com
+
+The free Render instance may spin down after inactivity and may therefore experience a cold-start delay when accessed after a period without traffic.
+
+## Engineering Decisions
+
+Several decisions were intentionally made to keep the implementation appropriate for the size and scope of the assessment.
+
+### CSV as the Source of Truth
+
+The CSV remains the authoritative source dataset.
+
+The SQLite database is a runtime representation of that data rather than a manually maintained source.
+
+### SQLite Instead of an External Database
+
+A separate database service would introduce additional credentials, configuration, and deployment complexity that is unnecessary for the current dataset.
+
+### Repository Layer
+
+Database access is separated from business logic through a repository layer.
+
+This makes it possible to replace SQLite with another database in the future without requiring major changes to the service layer.
+
+### Structured Filtering Before Similarity Search
+
+Pure text similarity is not sufficient for this dataset because policies have structured dimensions such as category, region, and conditions.
+
+Structured matching therefore narrows the candidate policies before similarity ranking.
+
+### No Arbitrary Answer for Ambiguous Questions
+
+When the available information is insufficient to safely choose between policies, the system asks for more specific information rather than guessing.
+
+### No External LLM
+
+The current scope does not require an external LLM.
+
+Using a deterministic retrieval system keeps the project:
+
+* Reproducible
+* Offline-capable
+* Cost-free
+* Easier to test
+* Easier for another developer to run
+
+## Testing
+
+The project includes automated tests covering the retrieval logic, policy service, and API layer.
+
+Run the test suite from the project root:
+
+pytest
+
+Expected result:
+
+16 passed
+
+### Test Coverage
+
+The tests verify:
+
+* **Retrieval**
+
+  * Expense category detection and aliases
+  * Region detection and aliases
+  * Region-specific policy filtering
+  * Global policy handling
+  * Ranking of relevant policies using TF-IDF similarity
+  * Ambiguous airfare queries
+
+* **Policy Service**
+
+  * Correct allowance retrieval for supported questions
+  * Handling of category and region-specific questions
+  * Detection of ambiguous questions
+  * Rejection of questions outside the travel expense policy
+
+* **API**
+
+  * Successful policy queries
+  * Unsupported questions
+  * Ambiguous questions
+  * Validation of invalid or missing request fields
+
+All tests currently pass successfully. A dependency-level deprecation warning may be displayed by Starlette/AnyIO during the test run; it does not affect the test results or application functionality.
+
+
+## Future Improvements
+
+The current implementation is intentionally small. A production-grade version could evolve into a larger policy-management and retrieval platform.
+
+The following are possible future improvements rather than requirements of the current implementation.
+
+### 1. Formal Data and API Modeling
+
+A more complete production system could begin with a formal data model and architecture diagram, for example using Lucidchart, to define:
+
+* Policy entities
+* Required data points
+* Relationships between entities
+* API request/response models
+* Document metadata
+* Policy versioning
+* Source information
+* Effective and expiration dates
+* Audit information
+
+This would provide a clearer contract between the data layer, APIs, retrieval system, and user-facing applications.
+
+### 2. Production Azure Infrastructure
+
+For an enterprise deployment, the application could be moved to dedicated Azure infrastructure.
+
+A possible architecture could include:
+
+
+Azure Resource Group
+        │
+        ├── Web Application
+        │
+        ├── PostgreSQL
+        │
+        ├── Azure API Management
+        │
+        ├── Vector Search
+        │
+        └── AI Services, Azure foundry (for having Azure Openai and Claude keys)
+
+
+PostgreSQL could replace SQLite when the application requires:
+
+* Concurrent users
+* Persistent production storage
+* Stronger database management
+* Policy versioning
+* Larger datasets
+* Integration with other enterprise systems
+
+Azure API Management could provide centralized API management, authentication, policies, monitoring, and controlled exposure of the FastAPI services.
+
+Swagger/OpenAPI documentation could continue to be used as the API contract and developer interface.
+
+### 3. Semantic Retrieval and RAG
+
+As the knowledge base grows beyond a small CSV, TF-IDF retrieval may no longer be sufficient.
+
+A production retrieval layer could evolve toward:
+
+
+Documents / Policies
+        ↓
+Full-Text Search
+        ↓
+Embedding Generation
+        ↓
+Vector Storage
+        ↓
+Semantic Search
+        ↓
+       RAG
+        ↓
+LLM Response
+
+
+Possible vector-storage approaches could include:
+
+* Azure AI Search
+* PostgreSQL with `pgvector`
+
+The final choice would depend on factors such as:
+
+* Dataset size
+* Search requirements
+* Existing infrastructure
+* Security requirements
+* Cost
+* Data residency
+* Whether the organization requires on-premises deployment
+
+The initial full-text search layer could also remain useful alongside vector search rather than being completely replaced.
+
+### 4. Conversational AI Layer
+
+A conversational AI layer could be introduced to handle the user-facing chat experience.
+
+An enterprise-approved model such as Claude or another supported LLM could:
+
+1. Receive the user's question
+2. Analyze the intent
+3. Extract relevant entities such as country, expense type, dates, and conditions
+4. Construct a retrieval request
+5. Send the request to the retrieval layer
+6. Use the retrieved policy information to formulate the final response
+
+The LLM should not become the source of truth. The authoritative policy documents and retrieval system should remain responsible for providing the factual policy information.
+
+### 5. Automated Policy Discovery
+
+A production system could periodically scan approved policy sources and websites for new or updated documents.
+
+Possible infrastructure could include:
+
+
+Scheduled Job
+      ↓
+Approved Policy Sources
+      ↓
+Document Detection
+      ↓
+Document Classification
+      ↓
+Duplicate Detection
+      ↓
+Knowledge Base Update
+      ↓
+Vector Index Update
+
+
+Azure Container Apps Jobs, scheduled jobs, or another appropriate scheduling mechanism (cron jobs or Windows scheduler) could be used for this workflow.
+
+An AI service could assist with classifying newly discovered documents and determining whether they represent:
+
+* New policies
+* Updated policies
+* Unrelated documents
+* Duplicate documents
+
+Human review could be introduced before publishing policy changes where required.
+
+### 6. Authentication and Authorization
+
+Enterprise authentication could be integrated using Microsoft Entra ID (formerly Azure AD).
+
+Depending on the chosen AI services and organizational security model, identity-based authentication could be used for service-to-service communication rather than storing long-lived credentials in application code.
+
+Short-lived access tokens should be obtained and refreshed through the appropriate identity mechanism rather than manually embedding or distributing bearer tokens.
+
+For example:
+
+
+User / Application
+        ↓
+Microsoft Entra ID
+        ↓
+Access Token
+        ↓
+API / AI Gateway
+        ↓
+Approved AI Service
+
+
+The exact authentication flow would depend on the organization's identity, security, and AI-service requirements.
+
+### 7. CI/CD and Infrastructure Automation
+
+The production system could use Azure DevOps or another CI/CD platform to automate:
+
+* Testing
+* Docker image builds
+* Security checks
+* Infrastructure deployment
+* Application deployment
+* Database migrations
+* Vector-index updates
+
+A possible pipeline could be:
+
+
+Git Commit
+    ↓
+CI Pipeline
+    ↓
+Automated Tests
+    ↓
+Build Docker Image
+    ↓
+Security / Quality Checks
+    ↓
+Deploy
+    ↓
+Integration Tests
+
+
+Infrastructure-as-code could also be introduced so that production environments can be reproduced consistently.
+
+## What Additional Time Would Enable
+
+Given additional development time, the highest-value improvements would be:
+
+1. Expand the policy data model to support policy versions, effective dates, document sources, and richer conditions.
+2. Add stronger automated test coverage and evaluation cases for retrieval accuracy.
+3. Introduce a production database such as PostgreSQL.
+4. Add semantic retrieval using embeddings and a vector database/search service.
+5. Introduce document ingestion and policy-update workflows.
+6. Add enterprise authentication and authorization.
+7. Introduce CI/CD and infrastructure automation.
+8. Add an LLM-based conversational layer while keeping retrieved policy data as the source of truth.
+
+These improvements would transform the current assessment-sized prototype into a more complete enterprise policy-management and RAG platform.
+
+## AI Tools Used
+
+AI tools were used as development assistance during the implementation of this project.
+
+They were used for tasks such as:
+
+* Discussing architecture and implementation approaches
+* Reviewing code and debugging issues
+* Explaining technical concepts
+* Suggesting testing strategies
+* Reviewing deployment configuration
+* Improving documentation
+
+All implementation decisions and code included in the repository were reviewed and understood before being used.
+
+The final architecture was intentionally kept within the scope of the assessment rather than introducing unnecessary infrastructure or dependencies.
