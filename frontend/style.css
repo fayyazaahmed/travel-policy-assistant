@@ -1,0 +1,129 @@
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-container {
+    width: 100%;
+    max-width: 800px;
+    height: 90vh;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-header {
+    padding: 24px;
+    border-bottom: 1px solid #ddd;
+}
+
+.chat-header h1 {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.chat-header p {
+    color: #666;
+    font-size: 14px;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.message {
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 10px;
+    line-height: 1.5;
+}
+
+.message-label {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.message-content {
+    font-size: 15px;
+}
+
+.assistant-message {
+    align-self: flex-start;
+    background: #f0f2f5;
+}
+
+.user-message {
+    align-self: flex-end;
+    background: #e8f0fe;
+}
+
+.chat-input-area {
+    display: flex;
+    gap: 10px;
+    padding: 16px;
+    border-top: 1px solid #ddd;
+}
+
+#question-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+}
+
+#question-input:focus {
+    border-color: #888;
+}
+
+#send-button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #222;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+#send-button:hover {
+    background: #444;
+}
+
+#send-button:disabled {
+    background: #999;
+    cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+    .chat-container {
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+    }
+
+    .message {
+        max-width: 90%;
+    }
+}

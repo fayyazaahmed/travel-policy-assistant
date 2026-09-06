@@ -1,0 +1,59 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Travel Policy Assistant</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="chat-container">
+
+        <header class="chat-header">
+            <h1>Travel Policy Assistant</h1>
+            <p>
+                Ask questions about travel expense allowances and policies.
+            </p>
+        </header>
+
+
+        <section id="chat-messages" class="chat-messages">
+
+            <div class="message assistant-message">
+                <div class="message-label">Assistant</div>
+                <div class="message-content">
+                    Hello! Ask me a question about the travel expense policy.
+                </div>
+            </div>
+
+        </section>
+
+
+        <form id="chat-form" class="chat-input-area">
+
+            <input
+                id="question-input"
+                type="text"
+                placeholder="Ask a travel policy question..."
+                autocomplete="off"
+                required
+            >
+
+            <button id="send-button" type="submit">
+                Ask
+            </button>
+
+        </form>
+
+    </main>
+
+
+    <script src="app.js"></script>
+
+</body>
+</html>
